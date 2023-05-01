@@ -1,0 +1,4 @@
+build*
+client/*.pro.user
+relay/*.pro.user
+server/*.pro.user
