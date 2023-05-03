@@ -15,7 +15,7 @@ public:
     ~Client();
     quint64 sendMessage(quint16 serverId, const QString& message);
     bool connectToServer(quint16 serverPort);
-    void desconnectAll(); //TODO Сделать дисконнект всех сокетов в m_serversMap
+    void disconnectAll(); //TODO Сделать дисконнект всех сокетов в m_serversMap
 
 private slots:
     /* TODO
