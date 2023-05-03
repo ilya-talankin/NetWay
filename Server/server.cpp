@@ -1,20 +1,20 @@
 #include "server.h"
 
 //TODO Доработать конструктор
-Server::Server(quint16 /*port*/, quint16 /*id*/, QObject *parent)
-    : QObject(parent)
+Server::Server(quint16 port, quint16 id, QObject *parent)
+    : QObject(parent), m_hh(id, this)
 {
-    initServer();
-    connect(tcpServer, &QTcpServer::newConnection, this, &Server::onConnected);
-    in.setVersion(QDataStream::Qt_6_5);
+    initServer(port);
 }
 
-void Server::initServer()
+void Server::initServer(quint16 port)
 {
     tcpServer = new QTcpServer(this);
-    if (!tcpServer->listen(QHostAddress::LocalHost, 3333)) {
+    if (!tcpServer->listen(QHostAddress::LocalHost, port)) {
         return;
     }
+    connect(tcpServer, &QTcpServer::newConnection, this, &Server::onConnected);
+    in.setVersion(QDataStream::Qt_6_5);
 }
 void Server::onConnected()
 {
@@ -23,9 +23,9 @@ void Server::onConnected()
     if (!socket)
         return;
 
-    connect(socket, &QTcpSocket::disconnected, this, [](){qDebug("Disconnected");});
     connect(socket, &QIODevice::readyRead, this, &Server::onRead);
-    //TODO Обработать подключение, отправить свой id
+    connect(socket, &QTcpSocket::disconnected, this, [](){qDebug("Disconnected");});
+    m_hh.handshake(socket);
 }
 
 void Server::onRead()

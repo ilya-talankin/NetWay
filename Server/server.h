@@ -5,6 +5,7 @@
 #include <QDataStream>
 #include <QTcpServer>
 #include <iostream>
+#include "../Handshaker/Handshaker.h"
 
 //! [0]
 class Server : public QObject
@@ -12,9 +13,7 @@ class Server : public QObject
     Q_OBJECT
 
 public:
-    // TODO Сделать конструктор, в который передаётся адрес
     explicit Server(quint16 port, quint16 id, QObject *parent = nullptr);
-signals:
 
 private slots:
     void onConnected();
@@ -22,10 +21,10 @@ private slots:
     //Как вариант, записывать их в буффер и при каждом его обновлении испускать сигнал
     void onRead();
 private:
-    void initServer();
+    void initServer(quint16 port);
     QTcpServer *tcpServer = nullptr;
     QDataStream in;
-    quint16 id = 0;
+    Handshaker m_hh;
 };
 //! [0]
 #endif // SERVER_H
