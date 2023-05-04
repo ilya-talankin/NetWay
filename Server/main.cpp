@@ -1,11 +1,17 @@
-#include "window.h"
-#include <QtWidgets/QtWidgets>
-
+#include <QCoreApplication>
+#include <server.h>
+#include <string>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    Window window(a.arguments());
-    window.show();
+    QCoreApplication a(argc, argv);
+    if (argc < 3) {
+        qDebug() << "Invalid argument";
+        qDebug() << argc;
+        return 0;
+    }
+    quint16 id = std::stoi(argv[1]);
+    quint16 port = std::stoi(argv[2]);
+    Server server(id, port);
     return a.exec();
 }

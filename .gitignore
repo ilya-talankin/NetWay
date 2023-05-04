@@ -1,4 +1,4 @@
-build*
-client/*.pro.user
-relay/*.pro.user
-server/*.pro.user
+/build*
+/Client/*.pro.user
+/Re/*.pro.user
+/Server/*.pro.user

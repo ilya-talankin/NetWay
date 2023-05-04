@@ -1,14 +1,15 @@
-QT = core network widgets
-
-CONFIG += c++17 #cmdline
+QT = core
+QT += network testlib
+CONFIG += c++17 cmdline console
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        main.cpp \
-        myclient.cpp
+        ../Handshaker/Handshaker.cpp \
+        client.cpp \
+        main.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -16,4 +17,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-	myclient.h
+    ../Handshaker/Handshaker.h \
+    client.h
