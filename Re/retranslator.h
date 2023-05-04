@@ -15,7 +15,7 @@ class Retranslator : public QObject
     Q_OBJECT
 
 public:
-    explicit Retranslator(quint16 id, quint16 serverPort, quint16 clientPort, const QVector<quint16>& portsVec, QObject *parent = nullptr);
+    explicit Retranslator(quint16 id, quint16 serverPort, const QVector<quint16>& portsVec, QObject *parent = nullptr);
 
 private slots:
     //void onConnected();

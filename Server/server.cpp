@@ -1,10 +1,9 @@
 #include "server.h"
 
-//TODO Доработать конструктор
 Server::Server(quint16 id, quint16 port, QObject *parent)
     : QObject(parent), m_hh(id, this), myID(id)
 {
-    initServer(port);
+    init(port);
 }
 
 void Server::sendMessage(quint16 id, const QString &message)
@@ -13,43 +12,43 @@ void Server::sendMessage(quint16 id, const QString &message)
         return;
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
+    out << message;
     out.setVersion(QDataStream::Qt_6_5);
     m_clientsMap[id]->write(block);
 }
 
-void Server::initServer(quint16 port)
+void Server::init(quint16 port)
 {
     tcpServer = new QTcpServer(this);
     if (!tcpServer->listen(QHostAddress::LocalHost, port)) {
         return;
     }
+    qDebug() << "Listening port " << tcpServer->serverPort();
     connect(tcpServer, &QTcpServer::newConnection, this, &Server::onConnected);
+
     in.setVersion(QDataStream::Qt_6_5);
 }
 
-void Server::startSending(QTcpSocket *socket)
-{
-    //TODO
-}
 
 void Server::onConnected()
 {
     QTcpSocket *socket = tcpServer->nextPendingConnection();
+    qDebug() << socket;
     if (!socket)
         return;
     connect(socket, &QIODevice::readyRead, this, &Server::onRead);
-    connect(socket, &QTcpSocket::connected, &m_hh, &Handshaker::handshakeSlot);
-    connect(this, &Server::include, this, [this, socket](quint16 ID){
-        connect(socket, &QTcpSocket::connected, this, [ID](){qDebug() << QString("ID %1 connected").arg(ID);});
-        m_clientsMap[ID] = socket;
-        connect(socket, &QTcpSocket::disconnected, this, [ID, socket, this](){
-            qDebug() << QString("ID %1 disconnected").arg(ID);
-            socket->deleteLater();
-            m_clientsMap.remove(ID);
-        });
-    });
+    m_hh.handshake(socket);
 }
 
+void Server::include(quint16 ID, QTcpSocket *clientConnection)
+{
+    qDebug() << QString("ID %1 connected").arg(ID);
+    m_clientsMap[ID] = clientConnection;
+    connect(clientConnection, &QTcpSocket::disconnected, this, [ID, this](){
+        qDebug() << QString("ID %1 disconnected").arg(ID);
+        m_clientsMap.remove(ID);
+    });
+}
 void Server::onRead()
 {
     QTcpSocket* socket = dynamic_cast<QTcpSocket*>(sender());
@@ -62,11 +61,12 @@ void Server::onRead()
     if (!in.commitTransaction())
         return;
     in >> message;
+    qDebug() << message << " from port " << socket->peerPort();
     /*при знакомстве handshaker всегда отправляет сообщение со словом ID,
     если сообщение содержит его, то сигналом include
     включаем id (message.split(" ").last().toUShort()) в мап клиентов*/
     if (message.contains("ID"))
-        emit include(message.split(" ").last().toUShort());
+        include(message.split(" ").last().toUShort(), socket);
     /*если получаем сообщение от клиента со словом Ready, то если
     указанный в сообщении ID совпадает с нашим (сообщение попало на сервер),
     начинаем отправку пакетов,
@@ -85,7 +85,10 @@ void Server::onRead()
         quint16 receiverID = message.split(":").first().toUInt();
         emit redirect(receiverID, message);
     }
-    qDebug() << message << " from port " << socket->peerPort();
 }
 
+void Server::startSending(QTcpSocket*)
+{
+    //зачем эта функция???
+}
 

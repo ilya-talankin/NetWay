@@ -1,6 +1,6 @@
 #include "client.h"
 
-Client::Client(quint16 id, quint16 clientPort, const QVector<quint16>& portsVec, QObject *parent)
+Client::Client(quint16 id, const QVector<quint16>& portsVec, QObject *parent)
     : QObject(parent), m_hh(id, this), myID(id)
 {
     /* TODO  Создать сокет для каждого сервера
@@ -8,19 +8,14 @@ Client::Client(quint16 id, quint16 clientPort, const QVector<quint16>& portsVec,
     //qDebug() << portsVec.size();
     for (quint16 serverPort : portsVec) {
         QTcpSocket* serverConnection = new QTcpSocket(this);
-        serverConnection->bind(QHostAddress::LocalHost, clientPort);
-        qDebug() << "Bind to " << clientPort;
         serverConnection->connectToHost(QHostAddress::LocalHost, serverPort);
-        connect(serverConnection, &QTcpSocket::readyRead, this, &Client::onRead);
         connect(serverConnection, &QTcpSocket::connected, &m_hh, &Handshaker::handshakeSlot);
-        connect(this, &Client::include, this, [this, serverConnection](quint16 ID){
-            connect(serverConnection, &QTcpSocket::connected, this, [ID](){qDebug() << QString("ID %1 connected").arg(ID);});
-            m_serversMap[ID] = serverConnection;
-            connect(serverConnection, &QTcpSocket::disconnected, this, [ID, serverConnection, this](){
-                qDebug() << QString("ID %1 disconnected").arg(ID);
-                serverConnection->deleteLater();
-                m_serversMap.remove(ID);
-            });
+        connect(serverConnection, &QTcpSocket::connected, serverConnection, [serverConnection](){
+            qDebug() << "Server connection on port " << serverConnection->localPort();
+        });
+        connect(serverConnection, &QTcpSocket::readyRead, this, &Client::onRead);
+        connect(serverConnection, &QTcpSocket::disconnected, serverConnection, [serverConnection](){
+            serverConnection->deleteLater();
         });
     }
     in.setVersion(QDataStream::Qt_6_5);
@@ -45,10 +40,12 @@ void Client::onRead()
     if (!in.commitTransaction())
         return;
     in >> message;
+    qDebug() << message << " from port " << serverConnection->peerPort();
     /* Если посылка содержит id сервера,
      * то записываем id и сокет в m_serversMap */
     if (message.contains("ID"))
-        emit include(message.split(" ").last().toUShort());
+        include(message.split(" ").last().toUShort(), serverConnection);
+
     /*если посылка - пересылаемый пакет, то
     если мы - получатель (message.contains(myID)), записываем пакет,
     иначе (мы - ретранслятор), пересылаем его серверу
@@ -67,7 +64,16 @@ void Client::onRead()
         quint16 receiverID = message.split(":").first().toUInt();
         emit redirect(receiverID, message);
     }
-    qDebug() << message << " from port " << serverConnection->peerPort();
+}
+void Client::include(quint16 ID, QTcpSocket* serverConnection)
+{
+    qDebug() << QString("ID %1 connected").arg(ID);
+    m_serversMap[ID] = serverConnection;
+    qDebug() << m_serversMap;
+    connect(serverConnection, &QTcpSocket::disconnected, this, [ID, this](){
+        qDebug() << QString("ID %1 disconnected").arg(ID);
+        m_serversMap.remove(ID);
+    });
 }
 
 quint64 Client::sendMessage(quint16 serverId, const QString& message)
@@ -93,4 +99,5 @@ void Client::receive(const QString &message)
 {
     //TODO
 }
+
 
