@@ -13,15 +13,15 @@ class Client : public QObject
 public:
     /* В конструкторе принимаем порт, на котором будет находиться клиент
      * TODO Добавить порты, к которым нужно подключиться */
-    Client(quint16 id, quint16 clientPort, const QVector<quint16>& portsVec, QObject *parent = nullptr);
+    Client(quint16 id, const QVector<quint16>& portsVec, QObject *parent = nullptr);
     ~Client();
     quint64 sendMessage(quint16 serverId, const QString& message);
     bool connectToServer(quint16 serverPort);
     void disconnectAll(); //TODO Сделать дисконнект всех сокетов в m_serversMap
 private:
     void receive( const QString& message);
+    void include(quint16 ID, QTcpSocket* serverConnection);
 signals:
-    void include(quint16 ID);
     void redirect(quint16 receiverID, const QString& message);
 private slots:
     /* TODO

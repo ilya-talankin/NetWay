@@ -15,12 +15,12 @@ class Server : public QObject
 public:
     explicit Server(quint16 id, quint16 port, QObject *parent = nullptr);
     void sendMessage(quint16 serverId, const QString& message);
+    void init(quint16 port);
 private:
-    void initServer(quint16 port);
     void startSending(QTcpSocket* socket);
+    void include(quint16 ID, QTcpSocket* clientConnection);
 signals:
     void connected();
-    void include(quint16 ID);
     void redirect(quint16 receiverID, const QString& message);
 private slots:
     void onConnected();
