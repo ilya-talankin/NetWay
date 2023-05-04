@@ -1,15 +1,20 @@
 #include <QtNetwork>
 #include <QtCore>
-
+#include "../Server/server.h"
 #include "retranslator.h"
 
-Retranslator::Retranslator(QObject *parent)
+Retranslator::Retranslator(quint16 id, quint16 serverPort, quint16 clientPort, const QVector<quint16>& portsVec, QObject *parent)
     : QObject(parent)
 {
-    initServer();
-    connect(tcpServer, &QTcpServer::newConnection, this, &Retranslator::onConnected);
+    server = new Server(id, serverPort, this);
+    client = new Client(id, clientPort, portsVec, this);
+    connect(server, &Server::redirect, client, &Client::sendMessage);
+    connect(client, &Client::redirect, server, &Server::sendMessage);
+    //initServer();
+    //connect(tcpServer, &QTcpServer::newConnection, this, &Retranslator::onConnected);
+    //connect(server, &QTcpServer::newConnection, this, &Retranslator::onConnected);
 }
-
+/*
 void Retranslator::initServer()
 {
     tcpServer = new QTcpServer(this);
@@ -19,6 +24,8 @@ void Retranslator::initServer()
     }
     in.setVersion(QDataStream::Qt_6_5);
 }
+*/
+/*
 void Retranslator::onConnected()
 {
     qDebug() << "New connection emited!";
@@ -38,10 +45,10 @@ void Retranslator::onConnected()
     };
     connect(socket, &QIODevice::readyRead, this, readMessage);
 }
-
+*/
+/*
 void Retranslator::readMessage()
 {
-    /*
     in.startTransaction();
 
     QString message;
@@ -51,7 +58,7 @@ void Retranslator::readMessage()
         return;
     qDebug() << "Reading message ...";
     qDebug() << message;
-    */
 }
+*/
 
 

@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QtNetwork>
 #include <QMap>
+#include <QString>
+#include "../Handshaker/Handshaker.h"
 
 class Client : public QObject
 {
@@ -11,16 +13,20 @@ class Client : public QObject
 public:
     /* В конструкторе принимаем порт, на котором будет находиться клиент
      * TODO Добавить порты, к которым нужно подключиться */
-    Client(quint16 clientPort, const QVector<quint16>& portsVec, QObject *parent = nullptr);
+    Client(quint16 id, quint16 clientPort, const QVector<quint16>& portsVec, QObject *parent = nullptr);
     ~Client();
     quint64 sendMessage(quint16 serverId, const QString& message);
     bool connectToServer(quint16 serverPort);
-    void desconnectAll(); //TODO Сделать дисконнект всех сокетов в m_serversMap
-
+    void disconnectAll(); //TODO Сделать дисконнект всех сокетов в m_serversMap
+private:
+    void receive( const QString& message);
+signals:
+    void include(quint16 ID);
+    void redirect(quint16 receiverID, const QString& message);
 private slots:
     /* TODO
      * Слот должен заносить сокет в m_serversMap, если получил от сервера его id
-    /* Слот должен либо проталкивать на предыдущий узел информацию об ошибке */
+     * Слот должен либо проталкивать на предыдущий узел информацию об ошибке */
     void onRead();
 
 private:
@@ -30,6 +36,9 @@ private:
      * и тот записывает id в таблицу
      */
     QMap<quint16, QTcpSocket*> m_serversMap;
+    QDataStream in;
+    Handshaker m_hh;
+    quint16 myID;
 };
 
 #endif // CLIENT_H

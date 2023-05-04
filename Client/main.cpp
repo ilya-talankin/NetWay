@@ -1,17 +1,42 @@
 #include <QCoreApplication>
 #include <QTimer>
 #include <iostream>
+#include <string>
 #include "client.h"
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    Client client(/*port*/0);
+    if (argc < 4) {
+        qDebug() << "Invalid arguments";
+        return 0;
+    }
+    quint16 id;
+    quint16 port;
+    QVector<quint16> portsVec;
+    try {
+        id = std::stoi(argv[1]);
+        port = std::stoi(argv[2]);
+        for (int i = 3; i < argc; ++i){
+            portsVec.push_back(std::stoi(argv[i]));
+        }
+    }
+    catch(std::exception& ex) {
+        qDebug() << ex.what();
+    }
+    Client client(id, port, portsVec);
 
-    QTimer timer;
+    /*QTimer timer;
     timer.setInterval(1000);
-    QObject::connect(&timer, &QTimer::timeout, &client, [&client](){(&client)->sendMessage("Hello from client");});
-    timer.start();
+    QObject::connect(&timer, &QTimer::timeout, &client, [&client, portsVec](){
+        for (const auto& ports : portsVec)
+            (&client)->sendMessage(ports, "Hello from client");
+    });
+    timer.start();*/
+    QTimer::singleShot(5000, [&client, portsVec](){
+        for (const auto& ports : portsVec)
+            (&client)->sendMessage(ports, "Ready");
+    });
 
     return a.exec();
 }
