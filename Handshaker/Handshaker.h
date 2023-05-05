@@ -9,6 +9,7 @@ class Handshaker : public QObject
 public:
     Handshaker(quint16 id, QObject* parent = nullptr);
     void handshake(QTcpSocket* tcpSocket);
+    quint16 id();
 public slots:
     void handshakeSlot();
 private:

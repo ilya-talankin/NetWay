@@ -9,8 +9,10 @@ int main(int argc, char *argv[])
         return 0;
     }
     quint16 id, serverPort;
+    quint64 delay;
     //Retranslator ID
     id = std::stoi(argv[1]);
+    //delay = std::stoi(argv[2]);
     //Retranslator port
     serverPort = std::stoi(argv[2]);
     //ports connect to (for client side)
@@ -24,6 +26,6 @@ int main(int argc, char *argv[])
         qDebug() << ex.what();
     }
 
-    Retranslator retranslator(id, serverPort, portsVec);
+    Retranslator retranslator(id, 0/*delay*/, serverPort, portsVec);
     return app.exec();
 }

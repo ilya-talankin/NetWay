@@ -16,13 +16,13 @@ public:
     Client(quint16 id, const QVector<quint16>& portsVec, QObject *parent = nullptr);
     ~Client();
     quint64 sendMessage(quint16 serverId, const QString& message);
-    bool connectToServer(quint16 serverPort);
+    void sendEverybody(const QString& message);
     void disconnectAll(); //TODO Сделать дисконнект всех сокетов в m_serversMap
+    quint16 id();
 private:
-    void receive( const QString& message);
     void include(quint16 ID, QTcpSocket* serverConnection);
 signals:
-    void redirect(quint16 receiverID, const QString& message);
+    void readed(const QString& message);
 private slots:
     /* TODO
      * Слот должен заносить сокет в m_serversMap, если получил от сервера его id
@@ -38,7 +38,6 @@ private:
     QMap<quint16, QTcpSocket*> m_serversMap;
     QDataStream in;
     Handshaker m_hh;
-    quint16 myID;
 };
 
 #endif // CLIENT_H
