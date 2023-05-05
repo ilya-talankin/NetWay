@@ -1,7 +1,7 @@
 #include "client.h"
 
 Client::Client(quint16 id, const QVector<quint16>& portsVec, QObject *parent)
-    : QObject(parent), m_hh(id, this), myID(id)
+    : QObject(parent), m_hh(id, this)
 {
     for (quint16 serverPort : portsVec) {
         QTcpSocket* serverConnection = new QTcpSocket(this);
