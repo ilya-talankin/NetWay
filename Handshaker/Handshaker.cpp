@@ -9,7 +9,7 @@ void Handshaker::handshake(QTcpSocket *tcpSocket)
     QByteArray block;
     QDataStream out(&block, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_6_5);
-    out << "ID " + QString::number(m_id);
+    out << "ID#" + QString::number(m_id);
     tcpSocket->write(block);
 }
 
@@ -20,4 +20,9 @@ void Handshaker::handshakeSlot()
         return;
     }
     handshake(serverConnection);
+}
+
+quint16 Handshaker::id()
+{
+    return m_id;
 }

@@ -24,18 +24,25 @@ int main(int argc, char *argv[])
         qDebug() << ex.what();
     }
     Client client(id, portsVec);
-
+/*
+    QString message = "PKG@0334:Hello!!!#2#1";
+    QStringList l1 = message.split("@");
+    QString dataAndPath = l1.at(1);
+    QStringList l2 = dataAndPath.split("#");
+    qDebug() << l2;
+    return 0;
+*/
     QTimer timer;
     timer.setInterval(1000);
     QObject::connect(&timer, &QTimer::timeout, &client, [&client](){
-        (&client)->sendMessage(2, "1:Ready");
+        (&client)->sendMessage(2, "PKG@0334:Hello!!!#5#1");
     });
     timer.start();
 
     QTimer timer2;
     timer2.setInterval(1000);
     QObject::connect(&timer2, &QTimer::timeout, &client, [&client](){
-        (&client)->sendMessage(3, "1:Ready");
+        (&client)->sendMessage(3, "PKG@0334:Hello!!!#5#1");
     });
     timer2.start();
 

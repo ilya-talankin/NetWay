@@ -1,7 +1,7 @@
 #include "server.h"
 
 Server::Server(quint16 id, quint16 port, QObject *parent)
-    : QObject(parent), m_hh(id, this), myID(id)
+    : QObject(parent), m_hh(id, this)
 {
     init(port);
 }
@@ -33,7 +33,6 @@ void Server::init(quint16 port)
 void Server::onConnected()
 {
     QTcpSocket *socket = tcpServer->nextPendingConnection();
-    qDebug() << socket;
     if (!socket)
         return;
     connect(socket, &QIODevice::readyRead, this, &Server::onRead);
@@ -62,33 +61,6 @@ void Server::onRead()
         return;
     in >> message;
     qDebug() << message << " from port " << socket->peerPort();
-    /*при знакомстве handshaker всегда отправляет сообщение со словом ID,
-    если сообщение содержит его, то сигналом include
-    включаем id (message.split(" ").last().toUShort()) в мап клиентов*/
-    if (message.contains("ID"))
-        include(message.split(" ").last().toUShort(), socket);
-    /*если получаем сообщение от клиента со словом Ready, то если
-    указанный в сообщении ID совпадает с нашим (сообщение попало на сервер),
-    начинаем отправку пакетов,
-    иначе (сообщение попало в ретранслятор) перенаправляем сообщение
-    предполагаемая структура ready-сообщения: id:Ready, где
-    id - id сервера, которому шлем запрос на пересылку пакетов*/
-    else if (message.contains("Ready")) {
-        quint16 receiverID = message.split(":").first().toUInt();
-        if (receiverID == myID)
-            startSending(socket);
-        else emit redirect(receiverID, message);
-    }
-    /*в общем случае (для первой версии) просто перенаправляем пакет
-    в метод sengMessage клиента*/
-    else {
-        quint16 receiverID = message.split(":").first().toUInt();
-        emit redirect(receiverID, message);
-    }
-}
-
-void Server::startSending(QTcpSocket*)
-{
-    //зачем эта функция???
+    emit readed(message);
 }
 

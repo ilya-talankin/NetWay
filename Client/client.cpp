@@ -3,9 +3,6 @@
 Client::Client(quint16 id, const QVector<quint16>& portsVec, QObject *parent)
     : QObject(parent), m_hh(id, this), myID(id)
 {
-    /* TODO  Создать сокет для каждого сервера
-     * Привязать сигнал ReadyRead к слоту readyRead() */
-    //qDebug() << portsVec.size();
     for (quint16 serverPort : portsVec) {
         QTcpSocket* serverConnection = new QTcpSocket(this);
         serverConnection->connectToHost(QHostAddress::LocalHost, serverPort);
@@ -33,7 +30,7 @@ void Client::onRead()
     if (!serverConnection) {
         return;
     }
-    // если сообщение об ошибке, то проталкиваем его дальше согласно маршруту
+
     QString message;
     in.setDevice(serverConnection);
     in.startTransaction();
@@ -43,33 +40,22 @@ void Client::onRead()
     qDebug() << message << " from port " << serverConnection->peerPort();
     /* Если посылка содержит id сервера,
      * то записываем id и сокет в m_serversMap */
-    if (message.contains("ID"))
-        include(message.split(" ").last().toUShort(), serverConnection);
+    if (message.mid(0, 2) == "ID") {
+        quint16 id = message.split('#').at(1).toUInt();
+        if (m_serversMap.contains(id))
+            return;
+        include(id, serverConnection);
+    }
+    else if(message.mid(0, 2) == "KA")
+        m_hh.handshake(serverConnection);
+    else
+        emit readed(message);
 
-    /*если посылка - пересылаемый пакет, то
-    если мы - получатель (message.contains(myID)), записываем пакет,
-    иначе (мы - ретранслятор), пересылаем его серверу
-    предполагаемая структура пакета: id:PCKT<номер>:timestamp:data,
-    разделять строку сплитами(":"), используя first()/last(),
-    timestamp = QTime::currentTime().msecsSinceStartOfDay()*/
-    else if (message.contains("PCKT")) {
-        quint16 receiverID = message.split(":").first().toUInt();
-        if (receiverID == myID)
-            receive(message.split(":").last());
-        else emit redirect(receiverID, message);
-    }
-    /*в общем случае (для первой версии) просто перенаправляем пакет
-    в метод sengMessage сервера*/
-    else {
-        quint16 receiverID = message.split(":").first().toUInt();
-        emit redirect(receiverID, message);
-    }
 }
 void Client::include(quint16 ID, QTcpSocket* serverConnection)
 {
     qDebug() << QString("ID %1 connected").arg(ID);
     m_serversMap[ID] = serverConnection;
-    qDebug() << m_serversMap;
     connect(serverConnection, &QTcpSocket::disconnected, this, [ID, this](){
         qDebug() << QString("ID %1 disconnected").arg(ID);
         m_serversMap.remove(ID);
@@ -87,6 +73,18 @@ quint64 Client::sendMessage(quint16 serverId, const QString& message)
     return m_serversMap[serverId]->write(block);
 }
 
+void Client::sendEverybody(const QString &message)
+{
+    qDebug() << "Broadcast";
+    QByteArray block;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_6_5);
+    out << message;
+    for (QTcpSocket* socket : m_serversMap) {
+        socket->write(block);
+    }
+}
+
 void Client::disconnectAll()
 {
     if (m_serversMap.isEmpty()) return;
@@ -95,9 +93,7 @@ void Client::disconnectAll()
     }
 }
 
-void Client::receive(const QString &message)
+quint16 Client::id()
 {
-    //TODO
+    return m_hh.id();
 }
-
-
